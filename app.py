@@ -1,39 +1,42 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
 
-# 1. Page Configuration
-st.set_page_config(page_title="Virtual Physics Lab", layout="wide")
+st.sidebar.title("🧰 Digital Storeroom")
+topic = st.sidebar.selectbox("Select Lab Module", 
+                             ["Electricity & Magnetism", "Motion", "Waves", "Thermal Physics"])
 
-st.title("⚡ Virtual Electromagnetism Lab")
-st.markdown("### Experiment 1: Verification of Ohm's Law")
+if topic == "Electricity & Magnetism":
+    st.header("⚡ Electricity Workbench")
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("Apparatus Selection")
+        # Define Voltage based on battery selection
+        battery_choice = st.radio("Pick a Battery Source", 
+                                 ["1.5V Cell", "3.0V (2x Cells in Series)", "9V Battery"])
+        
+        voltage_map = {"1.5V Cell": 1.5, "3.0V (2x Cells in Series)": 3.0, "9V Battery": 9.0}
+        V = voltage_map[battery_choice]
+        
+        # Define Resistance
+        load_choice = st.selectbox("Select Load Component", ["10Ω Resistor", "Small Lightbulb (3V Max)"])
+        R = 10 if load_choice == "10Ω Resistor" else 5  # Lightbulb has lower resistance
 
-# 2. Sidebar for Controls (Input)
-st.sidebar.header("Lab Equipment Controls")
-voltage = st.sidebar.slider("Variable DC Power Supply (V)", 0.0, 20.0, 5.0, 0.1)
-resistance = st.sidebar.slider("Resistor Value (Ω)", 10, 1000, 100, 10)
+    with col2:
+        st.subheader("Workbench Status")
+        current = V / R
+        
+        # Real-world behavior logic
+        if load_choice == "Small Lightbulb (3V Max)" and V > 3.0:
+            st.error("💥 POP! The bulb filament snapped. Too much voltage!")
+            st.metric("Ammeter Reading", "0.0 A")
+        else:
+            status = "💡 The bulb is glowing brightly!" if load_choice == "Small Lightbulb (3V Max)" else "✅ Circuit is closed."
+            st.success(status)
+            st.metric("Ammeter Reading", f"{current:.2f} A")
+            st.write(f"**Mathematical Proof:** $I = \\frac{V}{R} = \\frac{{ {V} }}{{ {R} }} = {current:.2f} A$")
 
-# 3. Physics Logic
-current = voltage / resistance  # I = V / R
-
-# 4. Display "Digital Meters"
-col1, col2, col3 = st.columns(3)
-col1.metric("Voltmeter Reading", f"{voltage} V")
-col2.metric("Resistance", f"{resistance} Ω")
-col3.metric("Ammeter Reading", f"{current:.4f} A", delta=None)
-
-# 5. Data Visualization (The Graph)
-st.subheader("V-I Characteristic Curve")
-v_range = np.linspace(0, 20, 100)
-i_range = v_range / resistance
-
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=v_range, y=i_range, mode='lines', name='Theoretical'))
-fig.add_trace(go.Scatter(x=[voltage], y=[current], mode='markers', 
-                         marker=dict(size=15, color='red'), name='Current Measurement'))
-
-fig.update_layout(xaxis_title="Voltage (V)", yaxis_title="Current (A)")
-st.plotly_chart(fig, use_container_width=True)
-
-st.info("Note: In a real lab, internal resistance of the ammeter would slightly affect these readings.")
+# Placeholder for your next module
+elif topic == "Motion":
+    st.header("🏎️ Mechanics Lab")
+    st.info("Coming soon: Ticker Timer and Friction experiments.")
