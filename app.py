@@ -130,7 +130,8 @@ class MathsLab:
         x = [i/10 for i in range(-100, 101)]
         y = [a*xi**2 + b*xi + c for xi in x]
         fig = px.line(x=x, y=y, title="Quadratic Function")
-        fig.add_vline(x=obs1, line_dash="dash", annotation_text="Observed Root")
+        fig.add_vline(x=obs1, line_dash="dash", annotation_text="Observed Root 1")
+        fig.add_vline(x=obs2, line_dash="dash", annotation_text="Observed Root 2", annotation_position="bottom right")
         return {"observed_roots": [obs1, obs2], "theoretical_roots": [r1,r2], "figure": fig}
 
 
@@ -146,7 +147,7 @@ with st.sidebar:
     name = st.text_input("Name", "Thabo Mokoena")
     sid = st.text_input("Student ID", "STU2026001")
     school = st.text_input("School ID", "SCH001")
-    grade = st.selectbox("Grade", ["IGCSE Year 2"])
+    grade = st.selectbox("Grade", ["IGCSE Year 1", "IGCSE Year 2", "A-Level"])
 
     if st.button("New Session"):
         st.session_state.core = VirtualLabCore(sid, name, school, grade)
@@ -166,12 +167,15 @@ tab_home, tab_p, tab_c, tab_b, tab_m, tab_r = st.tabs([
 ])
 
 with tab_home:
-    st.image("https://source.unsplash.com/random/1200x500/?laboratory", use_container_width=True)
+    st.info("Welcome to the Virtual AI Laboratory. Select a subject tab above to begin your experiments.")
+    st.markdown("### Recent Activity")
+    st.write(core.generate_teacher_report())
 
-# Physics Tab (3+ experiments)
+# ========================== PHYSICS TAB ==========================
 with tab_p:
     st.subheader("Physics Lab")
-    choice = st.selectbox("Experiment", ["Density", "Hooke's Law", "Specific Heat Capacity"])
+    choice = st.selectbox("Physics Experiment", ["Density", "Hooke's Law", "Specific Heat Capacity"])
+    
     if choice == "Density":
         col1, col2 = st.columns(2)
         m = col1.number_input("Mass (g)", 50.0)
@@ -180,12 +184,72 @@ with tab_p:
             r = physics.density(m, v)
             st.success(f"Observed: **{r['observed']:.4f}** {r['unit']}")
             st.info(f"Theoretical: {r['theoretical']:.4f} {r['unit']}")
+            
+    elif choice == "Hooke's Law":
+        col1, col2 = st.columns(2)
+        f = col1.number_input("Force (N)", 10.0)
+        ext = col2.number_input("Extension (m)", 0.2)
+        if st.button("Test Spring Constant"):
+            r = physics.hookes_law(f, ext)
+            st.success(f"Observed Spring Constant (k): **{r['observed_k']:.4f}** {r['unit']}")
+            st.info(f"Theoretical (k): {r['theoretical_k']:.4f} {r['unit']}")
 
-# Add similar blocks for other tabs (Chemistry, Biology, Mathematics)
+    elif choice == "Specific Heat Capacity":
+        col1, col2, col3 = st.columns(3)
+        mass_kg = col1.number_input("Mass (kg)", 1.0)
+        dt = col2.number_input("Temperature Change (°C)", 10.0)
+        energy = col3.number_input("Energy Supplied (J)", 42000.0)
+        if st.button("Calculate Specific Heat"):
+            r = physics.specific_heat(mass_kg, dt, energy)
+            st.success(f"Observed Heat Capacity (c): **{r['observed']:.2f}** {r['unit']}")
+            st.info(f"Theoretical (c): {r['theoretical']:.2f} {r['unit']}")
 
+
+# ========================== CHEMISTRY TAB ==========================
+with tab_c:
+    st.subheader("Chemistry Lab")
+    c_choice = st.selectbox("Chemistry Experiment", ["Acid-Base Titration", "Reaction Rate (Mass Loss)"])
+    
+    if c_choice == "Acid-Base Titration":
+        col1, col2, col3 = st.columns(3)
+        a_vol = col1.number_input("Acid Volume (cm³)", 25.0)
+        a_conc = col2.number_input("Acid Concentration (M)", 0.1)
+        b_conc = col3.number_input("Base Concentration (M)", 0.1)
+        if st.button("Perform Titration"):
+            r = chemistry.titration(a_vol, a_conc, b_conc)
+            st.success(f"Observed Titre Volume: **{r['observed_vol']:.2f}** {r['unit']}")
+            st.info(f"Theoretical Volume: {r['theoretical_vol']:.2f} {r['unit']}")
+            
+    elif c_choice == "Reaction Rate (Mass Loss)":
+        col1, col2 = st.columns(2)
+        temp = col1.number_input("Temperature (°C)", 30.0)
+        conc = col2.number_input("Concentration (M)", 1.0)
+        if st.button("Measure Reaction Rate"):
+            r = chemistry.reaction_rate(temp, conc)
+            st.success(f"Observed Reaction Rate: **{r['observed_rate']:.5f}** {r['unit']}")
+            st.info(f"Theoretical Rate: {r['theoretical_rate']:.5f} {r['unit']}")
+
+
+# ========================== BIOLOGY TAB ==========================
+with tab_b:
+    st.subheader("Biology Lab")
+    b_choice = st.selectbox("Biology Experiment", ["Osmosis"])
+    
+    if b_choice == "Osmosis":
+        col1, col2 = st.columns(2)
+        i_mass = col1.number_input("Initial Mass of Tissue (g)", 5.0)
+        c_diff = col2.number_input("Concentration Difference (M)", 0.5)
+        if st.button("Observe Osmosis"):
+            r = biology.osmosis(i_mass, c_diff)
+            st.success(f"Observed Mass Change: **{r['observed_%change']:.2f}%**")
+            st.info(f"Theoretical Mass Change: {r['theoretical_%change']:.2f}%")
+
+
+# ========================== MATHEMATICS TAB ==========================
 with tab_m:
     st.subheader("Mathematics Lab")
-    mchoice = st.selectbox("Topic", ["Pythagoras Theorem (Visual)", "Quadratic Equation"])
+    mchoice = st.selectbox("Mathematics Topic", ["Pythagoras Theorem (Visual)", "Quadratic Equation"])
+    
     if mchoice == "Pythagoras Theorem (Visual)":
         col1, col2 = st.columns(2)
         a = col1.number_input("Side a", value=3.0)
@@ -195,10 +259,36 @@ with tab_m:
             st.plotly_chart(res["figure"], use_container_width=True)
             st.success(f"Observed Hypotenuse: **{res['observed_c']:.3f} cm**")
             st.info(f"Theoretical: {res['theoretical_c']:.3f} cm")
+            
+    elif mchoice == "Quadratic Equation":
+        col1, col2, col3 = st.columns(3)
+        a_q = col1.number_input("Coefficient a", value=1.0)
+        b_q = col2.number_input("Coefficient b", value=-5.0)
+        c_q = col3.number_input("Constant c", value=6.0)
+        if st.button("Solve & Plot Roots"):
+            res = maths.quadratic(a_q, b_q, c_q)
+            if "error" in res:
+                st.error(res["error"])
+            else:
+                st.plotly_chart(res["figure"], use_container_width=True)
+                st.success(f"Observed Roots: **{res['observed_roots'][0]:.3f}**, **{res['observed_roots'][1]:.3f}**")
+                st.info(f"Theoretical Roots: {res['theoretical_roots'][0]:.3f}, {res['theoretical_roots'][1]:.3f}")
 
+
+# ========================== REPORT TAB ==========================
 with tab_r:
+    st.subheader("Teacher Dashboard & Export")
     report = core.generate_teacher_report()
-    st.subheader("Teacher Report")
-    st.write(report)
+    
+    st.json(report)
+    
+    # Optional: Download button for the JSON report
+    report_json = json.dumps(report, indent=4)
+    st.download_button(
+        label="Download Report as JSON",
+        file_name=f"{core.student_id}_report.json",
+        mime="application/json",
+        data=report_json
+    )
 
-st.caption("LETS'ELA NYAKALLO — Built for IGCSE Paper 6 Preparation")
+st.caption("LETS'ELA NYAKALLO © 2026 | Designed for authentic IGCSE preparation with real-world experimental error.")
